@@ -102,7 +102,8 @@
     👍 Ngón cái &nbsp;→&nbsp; Ngũ Tinh Kiếm Trận<br>
     🤘 Sừng quỷ &nbsp;→&nbsp; Hồi Phong Xoáy Kiếm<br>
     🤟 Ba ngón &nbsp;→&nbsp; Tam Tài Kiếm Trận<br>
-    🤙 Ngón út &nbsp;→&nbsp; Lãng Ba Kiếm Pháp
+    🤙 Ngón út &nbsp;→&nbsp; Lãng Ba Kiếm Pháp<br>
+    ☝ Một ngón &nbsp;→&nbsp; Thiên Kiếm Độc Chỉ
   </div>
 
   <script type="module">
@@ -139,6 +140,8 @@
     let gestureSmooth = 'free';
     const gestureBuffer = [];
     let handLandmarks = null;
+    let rawFingerTip = null;   // index fingertip in screen coords, updated each frame
+    const fingerTrail = [];    // ring of past fingertip positions — swords string along this
 
     const GESTURE_LABELS = {
       free: '',
@@ -149,6 +152,7 @@
       rock: '☯  HỒI PHONG XOÁY KIẾM  ☯',
       three: '△  TAM TÀI KIẾM TRẬN  △',
       pinky: '〜  LÃNG BA KIẾM PHÁP  〜',
+      point: '☝  THIÊN KIẾM ĐỘC CHỈ  ☝',
     };
 
     // ─── Shape clouds ─────────────────────────────────────────────────────────
@@ -319,10 +323,20 @@
         let tx, ty, ta;
 
         if (g === 'fist') {
-          const r = 10 + Math.sin(now * 0.0018 + this.idx * 0.6) * 8;
-          const a = now * 0.002 + this.idx * (Math.PI * 2 / NUM);
-          tx = CX + Math.cos(a) * r; ty = CY + Math.sin(a) * r;
-          ta = a + Math.PI * 0.5;
+          // 4 concentric rings, each rotating at different speed/direction
+          // swords point tip-inward (toward screen center)
+          const RINGS = 4;
+          const PER = NUM / RINGS;            // 50 per ring
+          const ring = Math.floor(this.idx / PER);
+          const pos = this.idx % PER;
+          const speeds = [0.00018, -0.00026, 0.00032, -0.00020];
+          const radii = [0.20, 0.40, 0.60, 0.82];
+
+          const a = (pos / PER) * Math.PI * 2 + now * speeds[ring];
+          const rv = SCALE * radii[ring];
+          tx = CX + Math.cos(a) * rv;
+          ty = CY + Math.sin(a) * rv;
+          ta = a + Math.PI;   // tip points toward center
 
         } else if (g === 'open') {
           const a = (this.idx / NUM) * Math.PI * 2 + now * 0.00045;
@@ -370,6 +384,15 @@
           const dtx = 2 * 0.88;
           const dty = Math.cos(t * Math.PI * 5) * Math.PI * 5 * 0.36;
           ta = Math.atan2(dty, dtx);
+
+        } else if (g === 'point') {
+          // Stream along the trail the finger drew
+          // particle 0 → head (tip), particle N-1 → tail (oldest position)
+          if (rawFingerTip) {
+            const tgt = fingerTrail[this.idx] || fingerTrail[fingerTrail.length - 1];
+            tx = tgt ? tgt.x : rawFingerTip.x;
+            ty = tgt ? tgt.y : rawFingerTip.y;
+          }
         }
 
         // Slow rotation for static formations (full turn ≈ 60s)
@@ -385,7 +408,15 @@
         if (tx !== undefined) {
           this.x += (tx - this.x) * this.lerpK;
           this.y += (ty - this.y) * this.lerpK;
-          this.angle += this.vAngle;   // spin freely in place
+          if (gestureSmooth === 'fist') {
+            // Align blades radially — tip points toward center
+            let da = ta - this.angle;
+            if (da > Math.PI) da -= Math.PI * 2;
+            if (da < -Math.PI) da += Math.PI * 2;
+            this.angle += da * 0.10;
+          } else {
+            this.angle += this.vAngle;   // spin freely for all other formations
+          }
         } else {
           this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
           if (this.x < -40) this.vx = Math.abs(this.vx);
@@ -430,7 +461,7 @@
           fist: [100, 180, 255], open: [80, 230, 190],
           sword: [180, 210, 255], thumb: [255, 215, 60],
           rock: [190, 80, 255], three: [80, 255, 150],
-          pinky: [100, 200, 255],
+          pinky: [100, 200, 255], point: [255, 160, 60],
         };
         const [rr, gg, bb] = ambients[gestureSmooth] || [100, 180, 255];
         const ar = 60 + Math.sin(now * 0.003) * 25;
@@ -439,6 +470,29 @@
         grd.addColorStop(1, 'transparent');
         ctx.fillStyle = grd;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Fingertip cursor glow for 'point' gesture
+      if (gestureSmooth === 'point' && rawFingerTip) {
+        const fg = ctx.createRadialGradient(
+          rawFingerTip.x, rawFingerTip.y, 0,
+          rawFingerTip.x, rawFingerTip.y, 48);
+        fg.addColorStop(0, 'rgba(255,210,100,0.40)');
+        fg.addColorStop(0.4, 'rgba(255,160,50,0.14)');
+        fg.addColorStop(1, 'transparent');
+        ctx.fillStyle = fg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Update finger trail — grow when finger moves, clear when leaving 'point'
+      if (gestureSmooth === 'point' && rawFingerTip) {
+        const last = fingerTrail[0];
+        if (!last || Math.hypot(rawFingerTip.x - last.x, rawFingerTip.y - last.y) > 2) {
+          fingerTrail.unshift({ x: rawFingerTip.x, y: rawFingerTip.y });
+          if (fingerTrail.length > NUM) fingerTrail.length = NUM;
+        }
+      } else if (gestureSmooth !== 'point') {
+        fingerTrail.length = 0;
       }
 
       for (const p of particles) p.update(now);
@@ -496,12 +550,14 @@
       if (upCount >= 4) return 'open';                     // 🖐 xòe tay
 
       if (!ix && !mx && !rx && !px) {
-        // Thumb-up: tip clearly above MCP knuckle (lm[2])
-        if (lm[4].y < lm[2].y - 0.04) return 'thumb';     // 👍 ngón cái
+        // Thumb-up: tip must be well above middle-finger MCP (lm[9] ≈ center of palm)
+        // Using lm[9] avoids false-positives when fist tucks thumb sideways
+        if (lm[4].y < lm[9].y - 0.07) return 'thumb';     // 👍 ngón cái
         return 'fist';                                     // ✊ nắm tay
       }
 
       if (ix && !mx && !rx && px) return 'rock';          // 🤘 sừng quỷ
+      if (ix && !mx && !rx && !px) return 'point';          // ☝ một ngón
       if (ix && mx && rx && !px) return 'three';         // 🤟 ba ngón
       if (!ix && !mx && !rx && px) return 'pinky';         // 🤙 ngón út
 
@@ -565,10 +621,16 @@
             const result = handLandmarker.detectForVideo(video, performance.now());
             if (result.landmarks?.length) {
               handLandmarks = result.landmarks[0];
+              // Track index fingertip in screen coords (mirror x to match CSS)
+              rawFingerTip = {
+                x: (1 - handLandmarks[8].x) * canvas.width,
+                y: handLandmarks[8].y * canvas.height,
+              };
               const raw = classifyGesture(handLandmarks);
               gestureSmooth = pushGesture(raw);
             } else {
               handLandmarks = null;
+              rawFingerTip = null;
               gestureSmooth = pushGesture('free');
             }
             gestureEl.textContent = GESTURE_LABELS[gestureSmooth] ?? '';
