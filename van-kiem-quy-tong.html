@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vạn Kiếm Quy Tông</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+    }
+
+    #canvas {
+      position: fixed;
+      inset: 0;
+    }
+
+    #video {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      width: 192px;
+      height: 144px;
+      opacity: 0.45;
+      border: 1px solid #1a2a4a;
+      border-radius: 8px;
+      transform: scaleX(-1);
+      z-index: 10;
+    }
+
+    #ui {
+      position: fixed;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+      z-index: 10;
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+    }
+
+    #status {
+      color: #5599cc;
+      font-size: 13px;
+      letter-spacing: 1px;
+      transition: opacity 1s;
+    }
+
+    #gesture-name {
+      margin-top: 6px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #e8f4ff;
+      letter-spacing: 3px;
+      text-shadow: 0 0 12px #88ccff, 0 0 24px #4488ff;
+      min-height: 32px;
+    }
+
+    #hint {
+      position: fixed;
+      bottom: 18px;
+      left: 18px;
+      color: #334466;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 12px;
+      line-height: 1.8;
+      z-index: 10;
+    }
+
+    #skelCanvas {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      width: 192px;
+      height: 144px;
+      z-index: 12;
+      pointer-events: none;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas"></canvas>
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="skelCanvas"></canvas>
+  <div id="ui">
+    <div id="status">Đang khởi động camera...</div>
+    <div id="gesture-name"></div>
+  </div>
+  <div id="hint">
+    ✊ Nắm tay &nbsp;→&nbsp; Vạn Kiếm Quy Tông<br>
+    🖐 Xòe tay &nbsp;→&nbsp; Kiếm Trận Vòng Tròn<br>
+    ☞ Trỏ+giữa khép →&nbsp; Hợp Kiếm Thành Hình<br>
+    👍 Ngón cái &nbsp;→&nbsp; Ngũ Tinh Kiếm Trận<br>
+    🤘 Sừng quỷ &nbsp;→&nbsp; Hồi Phong Xoáy Kiếm<br>
+    🤟 Ba ngón &nbsp;→&nbsp; Tam Tài Kiếm Trận<br>
+    🤙 Ngón út &nbsp;→&nbsp; Lãng Ba Kiếm Pháp
+  </div>
+
+  <script type="module">
+    import { HandLandmarker, FilesetResolver }
+      from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm';
+
+    'use strict';
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const video = document.getElementById('video');
+    const statusEl = document.getElementById('status');
+    const gestureEl = document.getElementById('gesture-name');
+    const skelCanvas = document.getElementById('skelCanvas');
+    const skelCtx = skelCanvas.getContext('2d');
+    skelCanvas.width = 192;
+    skelCanvas.height = 144;
+
+    let CX, CY, SCALE;
+    function updateLayout() {
+      CX = canvas.width / 2;
+      CY = canvas.height / 2;
+      SCALE = Math.min(canvas.width, canvas.height) * 0.39;
+    }
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      updateLayout();
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // ─── Gesture state ─────────────────────────────────────────────────────────
+    let gestureSmooth = 'free';
+    const gestureBuffer = [];
+    let handLandmarks = null;
+
+    const GESTURE_LABELS = {
+      free: '',
+      fist: '✦  VẠN KIẾM QUY TÔNG  ✦',
+      open: '❋  KIẾM TRẬN VÒNG TRÒN  ❋',
+      sword: '⚔  HỢP KIẾM THÀNH HÌNH  ⚔',
+      thumb: '★  NGŨ TINH KIẾM TRẬN  ★',
+      rock: '☯  HỒI PHONG XOÁY KIẾM  ☯',
+      three: '△  TAM TÀI KIẾM TRẬN  △',
+      pinky: '〜  LÃNG BA KIẾM PHÁP  〜',
+    };
+
+    // ─── Shape clouds ─────────────────────────────────────────────────────────
+    function buildSwordCloud(n) {
+      const pts = [];
+      const bladeCnt = Math.floor(n * 0.54);
+      for (let i = 0; i < bladeCnt; i++) {
+        const t = i / bladeCnt;
+        const y = -0.40 + t * 0.36;
+        const halfW = t * 0.046;
+        pts.push({ x: (Math.random() * 2 - 1) * halfW, y });
+      }
+      const guardCnt = Math.floor(n * 0.11);
+      for (let i = 0; i < guardCnt; i++) {
+        const t = i / guardCnt - 0.5;
+        pts.push({ x: t * 0.22, y: -0.01 + (Math.random() - 0.5) * 0.04 });
+      }
+      const gripCnt = Math.floor(n * 0.28);
+      for (let i = 0; i < gripCnt; i++) {
+        const t = i / gripCnt;
+        pts.push({ x: (Math.random() * 2 - 1) * 0.019, y: 0.02 + t * 0.23 });
+      }
+      const pommelCnt = n - bladeCnt - guardCnt - gripCnt;
+      for (let i = 0; i < pommelCnt; i++) {
+        const a = (i / pommelCnt) * Math.PI * 2;
+        pts.push({ x: Math.cos(a) * 0.038, y: 0.27 + Math.sin(a) * 0.026 });
+      }
+      for (let i = pts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pts[i], pts[j]] = [pts[j], pts[i]];
+      }
+      return pts.slice(0, n);
+    }
+
+    // 5-pointed star: 10 edge segments (outer→inner→outer×5)
+    function buildStarCloud(n) {
+      const R = 0.82, r = 0.32;
+      const outer = i => ({
+        x: Math.cos(i * Math.PI * 2 / 5 - Math.PI / 2) * R,
+        y: Math.sin(i * Math.PI * 2 / 5 - Math.PI / 2) * R,
+      });
+      const inner = i => ({
+        x: Math.cos((i + 0.5) * Math.PI * 2 / 5 - Math.PI / 2) * r,
+        y: Math.sin((i + 0.5) * Math.PI * 2 / 5 - Math.PI / 2) * r,
+      });
+      const pts = [];
+      const perEdge = n / 10;
+      for (let e = 0; e < 10; e++) {
+        const from = e % 2 === 0 ? outer(e >> 1) : inner(e >> 1);
+        const to = e % 2 === 0 ? inner(e >> 1) : outer(((e >> 1) + 1) % 5);
+        for (let j = 0; j < perEdge; j++) {
+          const t = j / perEdge;
+          pts.push({ x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t });
+        }
+      }
+      while (pts.length < n) pts.push({ ...pts[pts.length - 1] });
+      return pts.slice(0, n);
+    }
+
+    // Equilateral triangle
+    function buildTriangleCloud(n) {
+      const verts = [
+        { x: 0, y: -0.82 },
+        { x: 0.71, y: 0.41 },
+        { x: -0.71, y: 0.41 },
+      ];
+      const pts = [];
+      const perSide = n / 3;
+      for (let s = 0; s < 3; s++) {
+        const from = verts[s], to = verts[(s + 1) % 3];
+        for (let j = 0; j < perSide; j++) {
+          const t = j / perSide;
+          pts.push({ x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t });
+        }
+      }
+      while (pts.length < n) pts.push({ ...pts[pts.length - 1] });
+      return pts.slice(0, n);
+    }
+
+    const SWORD_CLOUD = buildSwordCloud(200);
+    const STAR_CLOUD = buildStarCloud(200);
+    const TRIANGLE_CLOUD = buildTriangleCloud(200);
+
+    // ─── Hand skeleton ─────────────────────────────────────────────────────────
+    const HAND_CONNECTIONS = [
+      [0, 1], [1, 2], [2, 3], [3, 4],
+      [0, 5], [5, 6], [6, 7], [7, 8],
+      [0, 9], [9, 10], [10, 11], [11, 12],
+      [0, 13], [13, 14], [14, 15], [15, 16],
+      [0, 17], [17, 18], [18, 19], [19, 20],
+      [5, 9], [9, 13], [13, 17],
+    ];
+
+    function drawHandSkeleton(lm) {
+      const W = skelCanvas.width, H = skelCanvas.height;
+      skelCtx.clearRect(0, 0, W, H);
+      if (!lm) return;
+
+      // Mirror x to match the CSS-mirrored video; map to PiP dimensions
+      const pt = i => ({
+        x: (1 - lm[i].x) * W,
+        y: lm[i].y * H,
+      });
+
+      skelCtx.save();
+      // Bones
+      skelCtx.lineCap = 'round';
+      skelCtx.lineWidth = 1.5;
+      skelCtx.shadowBlur = 6;
+      skelCtx.shadowColor = '#44aaff';
+      skelCtx.strokeStyle = 'rgba(80,190,255,0.85)';
+      skelCtx.globalAlpha = 0.95;
+      for (const [a, b] of HAND_CONNECTIONS) {
+        const p1 = pt(a), p2 = pt(b);
+        skelCtx.beginPath();
+        skelCtx.moveTo(p1.x, p1.y);
+        skelCtx.lineTo(p2.x, p2.y);
+        skelCtx.stroke();
+      }
+
+      // Joints
+      skelCtx.shadowBlur = 5;
+      for (let i = 0; i < 21; i++) {
+        const p = pt(i);
+        const isTip = (i === 4 || i === 8 || i === 12 || i === 16 || i === 20);
+        const isWrist = (i === 0);
+        const rad = isWrist ? 3.5 : isTip ? 3 : 1.8;
+        skelCtx.fillStyle = isTip ? '#ffffff' : isWrist ? '#88ddff' : '#55aaee';
+        skelCtx.shadowColor = '#aaddff';
+        skelCtx.beginPath();
+        skelCtx.arc(p.x, p.y, rad, 0, Math.PI * 2);
+        skelCtx.fill();
+      }
+      skelCtx.restore();
+    }
+
+    // ─── Particle ─────────────────────────────────────────────────────────────
+    const NUM = 200;
+    const particles = [];
+
+    class Particle {
+      constructor(idx) {
+        this.idx = idx;
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 3.5;
+        this.vy = (Math.random() - 0.5) * 3.5;
+        this.angle = Math.random() * Math.PI * 2;
+        this.vAngle = (Math.random() - 0.5) * 0.07;
+        this.len = 22 + Math.random() * 30;   // longer blade
+        this.alpha = 0.55 + Math.random() * 0.45;
+        this.lerpK = (0.055 + Math.random() * 0.03) * 3.2;
+        const hue = (185 + Math.random() * 55) | 0;
+        const bri = (68 + Math.random() * 28) | 0;
+        this.glowColor = `hsl(${hue},100%,${bri}%)`;
+        this.coreColor = `hsl(${hue},60%,96%)`;
+        // Blade vertices (recomputed each frame)
+        this.tipX = this.x; this.tipY = this.y;
+        this.baseX = this.x; this.baseY = this.y;
+        this.g1x = 0; this.g1y = 0;   // left guard
+        this.g2x = 0; this.g2y = 0;   // right guard
+        this.b1x = 0; this.b1y = 0;   // left pommel
+        this.b2x = 0; this.b2y = 0;   // right pommel
+      }
+
+      update(now) {
+        const g = gestureSmooth;
+        let tx, ty, ta;
+
+        if (g === 'fist') {
+          const r = 10 + Math.sin(now * 0.0018 + this.idx * 0.6) * 8;
+          const a = now * 0.002 + this.idx * (Math.PI * 2 / NUM);
+          tx = CX + Math.cos(a) * r; ty = CY + Math.sin(a) * r;
+          ta = a + Math.PI * 0.5;
+
+        } else if (g === 'open') {
+          const a = (this.idx / NUM) * Math.PI * 2 + now * 0.00045;
+          const rv = SCALE * 0.86;
+          tx = CX + Math.cos(a) * rv; ty = CY + Math.sin(a) * rv;
+          ta = a + Math.PI * 0.5;
+
+        } else if (g === 'sword') {
+          const pt = SWORD_CLOUD[this.idx];
+          tx = CX + pt.x * SCALE * 1.5; ty = CY + pt.y * SCALE * 1.5;
+          ta = -Math.PI * 0.5;   // tip points upward
+
+        } else if (g === 'thumb') {
+          // 5-pointed star — angle tangent along star edge
+          const pt = STAR_CLOUD[this.idx];
+          const next = STAR_CLOUD[(this.idx + 1) % NUM];
+          tx = CX + pt.x * SCALE * 1.15; ty = CY + pt.y * SCALE * 1.15;
+          ta = Math.atan2(next.y - pt.y, next.x - pt.x);
+
+        } else if (g === 'rock') {
+          // Archimedean spiral — analytic tangent
+          const t = this.idx / NUM;
+          const a = t * Math.PI * 7;
+          const rv = 0.06 + t * 0.80;
+          tx = CX + Math.cos(a) * rv * SCALE * 1.1;
+          ty = CY + Math.sin(a) * rv * SCALE * 1.1;
+          const tx_ = -Math.sin(a) * rv * 7 * Math.PI + Math.cos(a) * 0.80;
+          const ty_ = Math.cos(a) * rv * 7 * Math.PI + Math.sin(a) * 0.80;
+          ta = Math.atan2(ty_, tx_);
+
+        } else if (g === 'three') {
+          // Equilateral triangle — tangent along edges
+          const pt = TRIANGLE_CLOUD[this.idx];
+          const next = TRIANGLE_CLOUD[(this.idx + 1) % NUM];
+          tx = CX + pt.x * SCALE * 1.1; ty = CY + pt.y * SCALE * 1.1;
+          ta = Math.atan2(next.y - pt.y, next.x - pt.x);
+
+        } else if (g === 'pinky') {
+          // Sine wave — analytic tangent
+          const t = this.idx / NUM;
+          const wx = (t * 2 - 1) * 0.88;
+          const wy = Math.sin(t * Math.PI * 5) * 0.36;
+          tx = CX + wx * SCALE * 1.15;
+          ty = CY + wy * SCALE;
+          const dtx = 2 * 0.88;
+          const dty = Math.cos(t * Math.PI * 5) * Math.PI * 5 * 0.36;
+          ta = Math.atan2(dty, dtx);
+        }
+
+        // Slow rotation for static formations (full turn ≈ 60s)
+        if (tx !== undefined && (g === 'sword' || g === 'thumb' || g === 'rock' || g === 'three' || g === 'pinky')) {
+          const sr = now * 0.0001;
+          const cosSR = Math.cos(sr), sinSR = Math.sin(sr);
+          const dx = tx - CX, dy = ty - CY;
+          tx = CX + dx * cosSR - dy * sinSR;
+          ty = CY + dx * sinSR + dy * cosSR;
+          ta += sr;
+        }
+
+        if (tx !== undefined) {
+          this.x += (tx - this.x) * this.lerpK;
+          this.y += (ty - this.y) * this.lerpK;
+          this.angle += this.vAngle;   // spin freely in place
+        } else {
+          this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
+          if (this.x < -40) this.vx = Math.abs(this.vx);
+          if (this.x > canvas.width + 40) this.vx = -Math.abs(this.vx);
+          if (this.y < -40) this.vy = Math.abs(this.vy);
+          if (this.y > canvas.height + 40) this.vy = -Math.abs(this.vy);
+        }
+
+        // ── Blade geometry: tapered 5-vertex polygon ─────────────────────────
+        const half = this.len * 0.5;
+        const cosA = Math.cos(this.angle), sinA = Math.sin(this.angle);
+        const nx = -sinA, ny = cosA;          // perpendicular normal
+
+        this.tipX = this.x + cosA * half;    // pointed tip
+        this.tipY = this.y + sinA * half;
+        this.baseX = this.x - cosA * half;    // pommel end
+        this.baseY = this.y - sinA * half;
+
+        // Guard (widest point) at 30% from base along blade
+        const gx = this.baseX + cosA * this.len * 0.30;
+        const gy = this.baseY + sinA * this.len * 0.30;
+        const hw = this.len * 0.068;         // half-width at guard
+        const bhw = this.len * 0.016;         // half-width at pommel
+
+        this.g1x = gx + nx * hw; this.g1y = gy + ny * hw;
+        this.g2x = gx - nx * hw; this.g2y = gy - ny * hw;
+        this.b1x = this.baseX + nx * bhw; this.b1y = this.baseY + ny * bhw;
+        this.b2x = this.baseX - nx * bhw; this.b2y = this.baseY - ny * bhw;
+      }
+    }
+
+    for (let i = 0; i < NUM; i++) particles.push(new Particle(i));
+
+    // ─── Render loop — 3 passes ────────────────────────────────────────────────
+    function frame(now) {
+      ctx.fillStyle = 'rgba(0,0,14,0.17)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Ambient center glow per gesture
+      if (gestureSmooth !== 'free') {
+        const ambients = {
+          fist: [100, 180, 255], open: [80, 230, 190],
+          sword: [180, 210, 255], thumb: [255, 215, 60],
+          rock: [190, 80, 255], three: [80, 255, 150],
+          pinky: [100, 200, 255],
+        };
+        const [rr, gg, bb] = ambients[gestureSmooth] || [100, 180, 255];
+        const ar = 60 + Math.sin(now * 0.003) * 25;
+        const grd = ctx.createRadialGradient(CX, CY, 0, CX, CY, ar);
+        grd.addColorStop(0, `rgba(${rr},${gg},${bb},0.07)`);
+        grd.addColorStop(1, 'transparent');
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      for (const p of particles) p.update(now);
+
+      // Pass 1 — outer glow (blurry line along blade axis)
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 5;
+      ctx.shadowBlur = 14;
+      for (const p of particles) {
+        ctx.globalAlpha = p.alpha * 0.30;
+        ctx.shadowColor = p.glowColor;
+        ctx.strokeStyle = p.glowColor;
+        ctx.beginPath();
+        ctx.moveTo(p.tipX, p.tipY);
+        ctx.lineTo(p.baseX, p.baseY);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Pass 2 — blade silhouette: tapered 5-vertex polygon
+      //   tip → left-guard → left-pommel → right-pommel → right-guard → close
+      ctx.save();
+      ctx.shadowBlur = 0;
+      for (const p of particles) {
+        ctx.globalAlpha = p.alpha * 0.92;
+        ctx.fillStyle = p.coreColor;
+        ctx.beginPath();
+        ctx.moveTo(p.tipX, p.tipY);
+        ctx.lineTo(p.g1x, p.g1y);
+        ctx.lineTo(p.b1x, p.b1y);
+        ctx.lineTo(p.b2x, p.b2y);
+        ctx.lineTo(p.g2x, p.g2y);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Pass 3 — hand skeleton overlay
+      drawHandSkeleton(handLandmarks);
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    // ─── Gesture classifier ───────────────────────────────────────────────────
+    function classifyGesture(lm) {
+      const up = (tip, pip) => lm[tip].y < lm[pip].y - 0.01;
+      const ix = up(8, 6);   // index
+      const mx = up(12, 10);  // middle
+      const rx = up(16, 14);  // ring
+      const px = up(20, 18);  // pinky
+      const upCount = [ix, mx, rx, px].filter(Boolean).length;
+
+      if (upCount >= 4) return 'open';                     // 🖐 xòe tay
+
+      if (!ix && !mx && !rx && !px) {
+        // Thumb-up: tip clearly above MCP knuckle (lm[2])
+        if (lm[4].y < lm[2].y - 0.04) return 'thumb';     // 👍 ngón cái
+        return 'fist';                                     // ✊ nắm tay
+      }
+
+      if (ix && !mx && !rx && px) return 'rock';          // 🤘 sừng quỷ
+      if (ix && mx && rx && !px) return 'three';         // 🤟 ba ngón
+      if (!ix && !mx && !rx && px) return 'pinky';         // 🤙 ngón út
+
+      // Sword (剑指): index+middle together
+      if (ix && mx && !rx && !px) {
+        const dist = Math.hypot(lm[8].x - lm[12].x, lm[8].y - lm[12].y);
+        if (dist < 0.10) return 'sword';                   // ☞ trỏ+giữa
+      }
+
+      return 'free';
+    }
+
+    function pushGesture(g) {
+      gestureBuffer.push(g);
+      if (gestureBuffer.length > 9) gestureBuffer.shift();
+      const tally = {};
+      for (const x of gestureBuffer) tally[x] = (tally[x] || 0) + 1;
+      return Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0];
+    }
+
+    // ─── MediaPipe Tasks Vision – HandLandmarker ──────────────────────────────────
+    async function initHandTracking() {
+      statusEl.textContent = '⏳ Đang tải mô hình nhận diện tay...';
+
+      const vision = await FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+      );
+
+      const handLandmarker = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+          delegate: 'GPU',
+        },
+        runningMode: 'VIDEO',
+        numHands: 1,
+        minHandDetectionConfidence: 0.55,
+        minHandPresenceConfidence: 0.55,
+        minTrackingConfidence: 0.5,
+      });
+
+      // Start camera
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 320, height: 240, facingMode: 'user' },
+      });
+      video.srcObject = stream;
+      await video.play();
+
+      statusEl.textContent = '📷 Camera sẵn sàng — hướng tay vào màn hình';
+      setTimeout(() => { statusEl.style.opacity = '0'; }, 3500);
+
+      // Detection loop — throttled to ~20 fps via setTimeout to avoid blocking render/video
+      let lastVideoTime = -1;
+      let detecting = false;
+
+      async function detect() {
+        if (!detecting && video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+          detecting = true;
+          lastVideoTime = video.currentTime;
+          try {
+            const result = handLandmarker.detectForVideo(video, performance.now());
+            if (result.landmarks?.length) {
+              handLandmarks = result.landmarks[0];
+              const raw = classifyGesture(handLandmarks);
+              gestureSmooth = pushGesture(raw);
+            } else {
+              handLandmarks = null;
+              gestureSmooth = pushGesture('free');
+            }
+            gestureEl.textContent = GESTURE_LABELS[gestureSmooth] ?? '';
+          } finally {
+            detecting = false;
+          }
+        }
+        setTimeout(detect, 80); // ~12 fps inference
+      }
+      detect();
+    }
+
+    initHandTracking().catch(err => {
+      statusEl.textContent = '⚠ Lỗi: ' + err.message;
+      console.error(err);
+    });
+  </script>
+</body>
+
+</html>
