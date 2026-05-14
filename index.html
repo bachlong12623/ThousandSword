@@ -289,29 +289,9 @@
       skelCtx.restore();
     }
 
-    // ─── Adaptive particle count ────────────────────────────────────────────
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      || window.innerWidth < 768;
-    const NUM_MIN = 40;
-    const NUM_MAX = 200;
-    let NUM = isMobile ? 80 : 200;
-
+    // ─── Particle ─────────────────────────────────────────────────────────────
+    const NUM = 200;
     const particles = [];
-
-    function adjustParticles(target) {
-      target = Math.max(NUM_MIN, Math.min(NUM_MAX, Math.round(target / 20) * 20));
-      if (target === particles.length) return;
-      if (target < particles.length) {
-        particles.splice(target);
-      } else {
-        while (particles.length < target) particles.push(new Particle(particles.length));
-      }
-      NUM = particles.length;
-    }
-
-    let _fpsSamples = [];
-    let _lastFrameTime = 0;
-    let _lastAdjustTime = 0;
 
     class Particle {
       constructor(idx) {
@@ -472,19 +452,6 @@
 
     // ─── Render loop — 3 passes ────────────────────────────────────────────────
     function frame(now) {
-      // ── Adaptive FPS → particle count ──
-      if (_lastFrameTime > 0) {
-        _fpsSamples.push(1000 / (now - _lastFrameTime));
-        if (_fpsSamples.length > 60) _fpsSamples.shift();
-        if (now - _lastAdjustTime > 3000 && _fpsSamples.length >= 30) {
-          const avg = _fpsSamples.reduce((a, b) => a + b, 0) / _fpsSamples.length;
-          if (avg < 35 && NUM > NUM_MIN) adjustParticles(NUM - 20);
-          else if (avg > 55 && NUM < NUM_MAX) adjustParticles(NUM + 20);
-          _lastAdjustTime = now;
-        }
-      }
-      _lastFrameTime = now;
-
       ctx.fillStyle = 'rgba(0,0,14,0.17)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
