@@ -4,8 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vạn Kiếm Quy Tông</title>
+  <title>Vạn Kiếm Quy Tông · Tiên Kiếm Trận</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap');
+
     * {
       margin: 0;
       padding: 0;
@@ -13,7 +15,7 @@
     }
 
     body {
-      background: #000;
+      background: #020408;
       overflow: hidden;
     }
 
@@ -28,11 +30,12 @@
       right: 16px;
       width: 192px;
       height: 144px;
-      opacity: 0.45;
-      border: 1px solid #1a2a4a;
+      opacity: 0.35;
+      border: 1px solid rgba(180, 160, 90, 0.25);
       border-radius: 8px;
       transform: scaleX(-1);
       z-index: 10;
+      box-shadow: 0 0 24px rgba(80, 140, 200, 0.15);
     }
 
     #ui {
@@ -43,35 +46,46 @@
       text-align: center;
       pointer-events: none;
       z-index: 10;
-      font-family: 'Segoe UI', 'Arial', sans-serif;
     }
 
     #status {
-      color: #5599cc;
-      font-size: 13px;
-      letter-spacing: 1px;
+      color: #7a9ab8;
+      font-size: 12px;
+      letter-spacing: 2px;
+      font-family: 'Noto Serif SC', serif;
       transition: opacity 1s;
     }
 
     #gesture-name {
-      margin-top: 6px;
-      font-size: 24px;
-      font-weight: bold;
-      color: #e8f4ff;
-      letter-spacing: 3px;
-      text-shadow: 0 0 12px #88ccff, 0 0 24px #4488ff;
-      min-height: 32px;
+      margin-top: 8px;
+      font-size: 22px;
+      font-weight: 700;
+      font-family: 'Ma Shan Zheng', 'Noto Serif SC', serif;
+      color: #f0e6c8;
+      letter-spacing: 4px;
+      text-shadow:
+        0 0 8px rgba(255, 220, 140, 0.9),
+        0 0 20px rgba(120, 200, 255, 0.5),
+        0 0 40px rgba(80, 160, 255, 0.25);
+      min-height: 36px;
     }
 
     #hint {
       position: fixed;
       bottom: 18px;
       left: 18px;
-      color: #334466;
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 12px;
-      line-height: 1.8;
+      color: rgba(120, 150, 180, 0.55);
+      font-family: 'Noto Serif SC', serif;
+      font-size: 11px;
+      line-height: 2;
       z-index: 10;
+      border-left: 2px solid rgba(180, 150, 80, 0.3);
+      padding-left: 12px;
+    }
+
+    #hint strong {
+      color: rgba(220, 200, 140, 0.75);
+      font-weight: 400;
     }
 
     #skelCanvas {
@@ -96,14 +110,14 @@
     <div id="gesture-name"></div>
   </div>
   <div id="hint">
-    ✊ Nắm tay &nbsp;→&nbsp; Vạn Kiếm Quy Tông<br>
-    🖐 Xòe tay &nbsp;→&nbsp; Kiếm Trận Vòng Tròn<br>
-    ☞ Trỏ+giữa khép →&nbsp; Hợp Kiếm Thành Hình<br>
-    👍 Ngón cái &nbsp;→&nbsp; Ngũ Tinh Kiếm Trận<br>
-    🤘 Sừng quỷ &nbsp;→&nbsp; Hồi Phong Xoáy Kiếm<br>
-    🤟 Ba ngón &nbsp;→&nbsp; Tam Tài Kiếm Trận<br>
-    🤙 Ngón út &nbsp;→&nbsp; Lãng Ba Kiếm Pháp<br>
-    ☝ Một ngón &nbsp;→&nbsp; Thiên Kiếm Độc Chỉ
+    ✊ Nắm tay &nbsp;→&nbsp; <strong>Vạn Kiếm Quy Tông</strong><br>
+    🖐 Xòe tay &nbsp;→&nbsp; <strong>Bát Quái Tiên Trận</strong><br>
+    ☞ Trỏ+giữa khép &nbsp;→&nbsp; <strong>Ngự Kiếm Thành Hình</strong><br>
+    👍 Ngón cái &nbsp;→&nbsp; <strong>Ngũ Hành Đại Trận</strong><br>
+    🤘 Sừng quỷ &nbsp;→&nbsp; <strong>Thái Cực Huyền Vortex</strong><br>
+    🤟 Ba ngón &nbsp;→&nbsp; <strong>Tam Tài Tiên Kiếm</strong><br>
+    🤙 Ngón út &nbsp;→&nbsp; <strong>Lăng Ba Vi Bộ</strong><br>
+    ☝ Một ngón &nbsp;→&nbsp; <strong>Kiếm Khí Chỉ Pháp</strong>
   </div>
 
   <script type="module">
@@ -123,6 +137,22 @@
     skelCanvas.height = 144;
 
     let CX, CY, SCALE;
+    let bgStars = [];
+
+    function initBgStars() {
+      bgStars = [];
+      const count = Math.floor((canvas.width * canvas.height) / 12000);
+      for (let i = 0; i < count; i++) {
+        bgStars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 1.4 + 0.3,
+          phase: Math.random() * Math.PI * 2,
+          spd: 0.001 + Math.random() * 0.003,
+        });
+      }
+    }
+
     function updateLayout() {
       CX = canvas.width / 2;
       CY = canvas.height / 2;
@@ -132,6 +162,7 @@
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       updateLayout();
+      initBgStars();
     }
     resize();
     window.addEventListener('resize', resize);
@@ -140,56 +171,122 @@
     let gestureSmooth = 'free';
     const gestureBuffer = [];
     let handLandmarks = null;
-    let rawFingerTip = null;   // index fingertip in screen coords, updated each frame
-    const fingerTrail = [];    // ring of past fingertip positions — swords string along this
+    let rawFingerTip = null;
+    const fingerTrail = [];
 
     const GESTURE_LABELS = {
       free: '',
-      fist: '✦  VẠN KIẾM QUY TÔNG  ✦',
-      open: '❋  KIẾM TRẬN VÒNG TRÒN  ❋',
-      sword: '⚔  HỢP KIẾM THÀNH HÌNH  ⚔',
-      thumb: '★  NGŨ TINH KIẾM TRẬN  ★',
-      rock: '☯  HỒI PHONG XOÁY KIẾM  ☯',
-      three: '△  TAM TÀI KIẾM TRẬN  △',
-      pinky: '〜  LÃNG BA KIẾM PHÁP  〜',
-      point: '☝  THIÊN KIẾM ĐỘC CHỈ  ☝',
+      fist: '萬劍歸宗 · VẠN KIẾM QUY TÔNG',
+      open: '八卦仙陣 · BÁT QUÁI TIÊN TRẬN',
+      sword: '御劍成型 · NGỰ KIẾM THÀNH HÌNH',
+      thumb: '五行大陣 · NGŨ HÀNH ĐẠI TRẬN',
+      rock: '太極漩渦 · THÁI CỰC HUYỀN VORTEX',
+      three: '三才劍陣 · TAM TÀI TIÊN KIẾM',
+      pinky: '凌波微步 · LĂNG BA VI BỘ',
+      point: '劍氣一指 · KIẾM KHÍ CHỈ PHÁP',
     };
 
-    // ─── Shape clouds ─────────────────────────────────────────────────────────
+    const ELEMENT_PALETTES = {
+      metal: { hue: 48, sat: 30, glow: 'rgba(255, 235, 180,', core: 'rgba(255, 252, 240,' },
+      wood:  { hue: 128, sat: 75, glow: 'rgba(100, 255, 160,', core: 'rgba(220, 255, 230,' },
+      water: { hue: 205, sat: 90, glow: 'rgba(80, 200, 255,', core: 'rgba(220, 245, 255,' },
+      fire:  { hue: 12, sat: 95, glow: 'rgba(255, 120, 60,', core: 'rgba(255, 230, 200,' },
+      earth: { hue: 35, sat: 55, glow: 'rgba(200, 160, 80,', core: 'rgba(255, 240, 210,' },
+    };
+    const ELEMENT_KEYS = ['metal', 'wood', 'water', 'fire', 'earth'];
+
+    const GESTURE_AMBIENT = {
+      fist:  [60, 140, 255],
+      open:  [180, 220, 255],
+      sword: [200, 230, 255],
+      thumb: [255, 200, 80],
+      rock:  [160, 100, 255],
+      three: [100, 255, 180],
+      pinky: [120, 210, 255],
+      point: [255, 180, 80],
+    };
+
+    // ─── Shape clouds (tiên trận patterns) ─────────────────────────────────────
+    function shuffle(pts) {
+      for (let i = pts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pts[i], pts[j]] = [pts[j], pts[i]];
+      }
+      return pts;
+    }
+
+    function buildPolyCloud(n, verts) {
+      const pts = [];
+      const perSide = n / verts.length;
+      for (let s = 0; s < verts.length; s++) {
+        const from = verts[s], to = verts[(s + 1) % verts.length];
+        for (let j = 0; j < perSide; j++) {
+          const t = j / perSide;
+          pts.push({
+            x: from.x + (to.x - from.x) * t,
+            y: from.y + (to.y - from.y) * t,
+            seg: s,
+          });
+        }
+      }
+      while (pts.length < n) pts.push({ ...pts[pts.length - 1], seg: 0 });
+      return pts.slice(0, n);
+    }
+
     function buildSwordCloud(n) {
       const pts = [];
       const bladeCnt = Math.floor(n * 0.54);
       for (let i = 0; i < bladeCnt; i++) {
         const t = i / bladeCnt;
-        const y = -0.40 + t * 0.36;
-        const halfW = t * 0.046;
-        pts.push({ x: (Math.random() * 2 - 1) * halfW, y });
+        const y = -0.42 + t * 0.38;
+        const halfW = t * 0.044;
+        pts.push({ x: (Math.random() * 2 - 1) * halfW, y, seg: 0 });
       }
       const guardCnt = Math.floor(n * 0.11);
       for (let i = 0; i < guardCnt; i++) {
         const t = i / guardCnt - 0.5;
-        pts.push({ x: t * 0.22, y: -0.01 + (Math.random() - 0.5) * 0.04 });
+        pts.push({ x: t * 0.22, y: -0.01 + (Math.random() - 0.5) * 0.04, seg: 1 });
       }
       const gripCnt = Math.floor(n * 0.28);
       for (let i = 0; i < gripCnt; i++) {
         const t = i / gripCnt;
-        pts.push({ x: (Math.random() * 2 - 1) * 0.019, y: 0.02 + t * 0.23 });
+        pts.push({ x: (Math.random() * 2 - 1) * 0.018, y: 0.02 + t * 0.24, seg: 2 });
       }
       const pommelCnt = n - bladeCnt - guardCnt - gripCnt;
       for (let i = 0; i < pommelCnt; i++) {
         const a = (i / pommelCnt) * Math.PI * 2;
-        pts.push({ x: Math.cos(a) * 0.038, y: 0.27 + Math.sin(a) * 0.026 });
+        pts.push({ x: Math.cos(a) * 0.036, y: 0.28 + Math.sin(a) * 0.024, seg: 3 });
       }
-      for (let i = pts.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pts[i], pts[j]] = [pts[j], pts[i]];
-      }
-      return pts.slice(0, n);
+      return shuffle(pts).slice(0, n);
     }
 
-    // 5-pointed star: 10 edge segments (outer→inner→outer×5)
-    function buildStarCloud(n) {
-      const R = 0.82, r = 0.32;
+    // Bát Quái — octagon with inner talisman circle
+    function buildBaguaCloud(n) {
+      const pts = [];
+      const outer = Math.floor(n * 0.72);
+      const inner = n - outer;
+      const R = 0.86;
+      const perSide = outer / 8;
+      for (let s = 0; s < 8; s++) {
+        const a1 = s * Math.PI / 4 - Math.PI / 8;
+        const a2 = (s + 1) * Math.PI / 4 - Math.PI / 8;
+        for (let j = 0; j < perSide; j++) {
+          const t = j / perSide;
+          const a = a1 + (a2 - a1) * t;
+          pts.push({ x: Math.cos(a) * R, y: Math.sin(a) * R, seg: s });
+        }
+      }
+      for (let i = 0; i < inner; i++) {
+        const a = (i / inner) * Math.PI * 2;
+        const r = 0.22 + Math.sin(a * 4) * 0.04;
+        pts.push({ x: Math.cos(a) * r, y: Math.sin(a) * r, seg: 8 });
+      }
+      return pts;
+    }
+
+    // Ngũ Hành — pentagram star
+    function buildWuxingCloud(n) {
+      const R = 0.82, r = 0.30;
       const outer = i => ({
         x: Math.cos(i * Math.PI * 2 / 5 - Math.PI / 2) * R,
         y: Math.sin(i * Math.PI * 2 / 5 - Math.PI / 2) * R,
@@ -205,36 +302,88 @@
         const to = e % 2 === 0 ? inner(e >> 1) : outer(((e >> 1) + 1) % 5);
         for (let j = 0; j < perEdge; j++) {
           const t = j / perEdge;
-          pts.push({ x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t });
+          pts.push({
+            x: from.x + (to.x - from.x) * t,
+            y: from.y + (to.y - from.y) * t,
+            seg: Math.floor(e / 2),
+          });
         }
       }
-      while (pts.length < n) pts.push({ ...pts[pts.length - 1] });
+      while (pts.length < n) pts.push({ ...pts[pts.length - 1], seg: 0 });
       return pts.slice(0, n);
     }
 
-    // Equilateral triangle
-    function buildTriangleCloud(n) {
-      const verts = [
-        { x: 0, y: -0.82 },
-        { x: 0.71, y: 0.41 },
-        { x: -0.71, y: 0.41 },
-      ];
+    // Tam Tài — equilateral triangle + inner inverted (talisman seal)
+    function buildSancaiCloud(n) {
+      const outer = buildPolyCloud(Math.floor(n * 0.7), [
+        { x: 0, y: -0.84 },
+        { x: 0.73, y: 0.42 },
+        { x: -0.73, y: 0.42 },
+      ]);
+      const innerN = n - outer.length;
+      const inner = buildPolyCloud(innerN, [
+        { x: 0, y: 0.38 },
+        { x: -0.42, y: -0.22 },
+        { x: 0.42, y: -0.22 },
+      ]);
+      return outer.concat(inner);
+    }
+
+    // Thái Cực — dual yin-yang spiral arms
+    function buildTaijiCloud(n) {
       const pts = [];
-      const perSide = n / 3;
-      for (let s = 0; s < 3; s++) {
-        const from = verts[s], to = verts[(s + 1) % 3];
-        for (let j = 0; j < perSide; j++) {
-          const t = j / perSide;
-          pts.push({ x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t });
-        }
+      const half = Math.floor(n / 2);
+      for (let i = 0; i < n; i++) {
+        const t = (i % half) / half;
+        const yang = i < half;
+        const a = t * Math.PI * 6 + (yang ? 0 : Math.PI);
+        const rv = 0.08 + t * 0.78;
+        const wobble = Math.sin(t * Math.PI * 3) * 0.06;
+        pts.push({
+          x: Math.cos(a) * (rv + wobble) * (yang ? 1 : 0.92),
+          y: Math.sin(a) * (rv + wobble) * (yang ? 1 : 0.92),
+          seg: yang ? 0 : 1,
+        });
       }
-      while (pts.length < n) pts.push({ ...pts[pts.length - 1] });
-      return pts.slice(0, n);
+      return pts;
     }
 
-    const SWORD_CLOUD = buildSwordCloud(200);
-    const STAR_CLOUD = buildStarCloud(200);
-    const TRIANGLE_CLOUD = buildTriangleCloud(200);
+    // Lăng Ba — flowing sine river (lightness steps on water)
+    function buildLingboCloud(n) {
+      const pts = [];
+      for (let i = 0; i < n; i++) {
+        const t = i / n;
+        const wx = (t * 2 - 1) * 0.90;
+        const wy = Math.sin(t * Math.PI * 6) * 0.32 + Math.sin(t * Math.PI * 13) * 0.08;
+        pts.push({ x: wx, y: wy, seg: Math.floor(t * 6) % 6 });
+      }
+      return pts;
+    }
+
+    const SWORD_CLOUD = buildSwordCloud(220);
+    const BAGUA_CLOUD = buildBaguaCloud(220);
+    const WUXING_CLOUD = buildWuxingCloud(220);
+    const SANCAI_CLOUD = buildSancaiCloud(220);
+    const TAIJI_CLOUD = buildTaijiCloud(220);
+    const LINGBO_CLOUD = buildLingboCloud(220);
+
+    // ─── Background stars / mist ───────────────────────────────────────────────
+    function drawBackground(now) {
+      const grd = ctx.createRadialGradient(CX, CY * 0.85, 0, CX, CY, SCALE * 2.2);
+      grd.addColorStop(0, 'rgba(8, 16, 32, 0.55)');
+      grd.addColorStop(0.45, 'rgba(4, 8, 18, 0.35)');
+      grd.addColorStop(1, 'rgba(2, 4, 10, 0.2)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (const s of bgStars) {
+        const a = 0.15 + Math.sin(now * s.spd + s.phase) * 0.12;
+        ctx.fillStyle = `rgba(200, 220, 255, ${a})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
 
     // ─── Hand skeleton ─────────────────────────────────────────────────────────
     const HAND_CONNECTIONS = [
@@ -251,20 +400,14 @@
       skelCtx.clearRect(0, 0, W, H);
       if (!lm) return;
 
-      // Mirror x to match the CSS-mirrored video; map to PiP dimensions
-      const pt = i => ({
-        x: (1 - lm[i].x) * W,
-        y: lm[i].y * H,
-      });
+      const pt = i => ({ x: (1 - lm[i].x) * W, y: lm[i].y * H });
 
       skelCtx.save();
-      // Bones
       skelCtx.lineCap = 'round';
-      skelCtx.lineWidth = 1.5;
-      skelCtx.shadowBlur = 6;
-      skelCtx.shadowColor = '#44aaff';
-      skelCtx.strokeStyle = 'rgba(80,190,255,0.85)';
-      skelCtx.globalAlpha = 0.95;
+      skelCtx.lineWidth = 1.2;
+      skelCtx.shadowBlur = 8;
+      skelCtx.shadowColor = 'rgba(180, 220, 255, 0.8)';
+      skelCtx.strokeStyle = 'rgba(140, 200, 255, 0.7)';
       for (const [a, b] of HAND_CONNECTIONS) {
         const p1 = pt(a), p2 = pt(b);
         skelCtx.beginPath();
@@ -273,15 +416,13 @@
         skelCtx.stroke();
       }
 
-      // Joints
-      skelCtx.shadowBlur = 5;
       for (let i = 0; i < 21; i++) {
         const p = pt(i);
         const isTip = (i === 4 || i === 8 || i === 12 || i === 16 || i === 20);
-        const isWrist = (i === 0);
-        const rad = isWrist ? 3.5 : isTip ? 3 : 1.8;
-        skelCtx.fillStyle = isTip ? '#ffffff' : isWrist ? '#88ddff' : '#55aaee';
-        skelCtx.shadowColor = '#aaddff';
+        const rad = i === 0 ? 3 : isTip ? 2.8 : 1.6;
+        skelCtx.fillStyle = isTip ? 'rgba(255, 250, 230, 0.95)' : 'rgba(120, 200, 255, 0.85)';
+        skelCtx.shadowColor = 'rgba(200, 240, 255, 0.9)';
+        skelCtx.shadowBlur = isTip ? 6 : 4;
         skelCtx.beginPath();
         skelCtx.arc(p.x, p.y, rad, 0, Math.PI * 2);
         skelCtx.fill();
@@ -289,249 +430,499 @@
       skelCtx.restore();
     }
 
-    // ─── Particle ─────────────────────────────────────────────────────────────
-    const NUM = 200;
+    // ─── Jian (tiên kiếm) geometry ─────────────────────────────────────────────
+    function ptAlong(cx, cy, cosA, sinA, nx, ny, dist, halfW) {
+      const px = cx + cosA * dist;
+      const py = cy + sinA * dist;
+      return {
+        l: { x: px + nx * halfW, y: py + ny * halfW },
+        r: { x: px - nx * halfW, y: py - ny * halfW },
+        c: { x: px, y: py },
+      };
+    }
+
+    function bladeHalfWidth(L, t) {
+      if (t > 0.9) return L * 0.003 * (1 - t) / 0.1;
+      const flare = Math.min(t / 0.07, 1);
+      const taper = Math.pow(1 - t, 0.72);
+      return L * (0.028 * flare + 0.062 * taper);
+    }
+
+    function buildJianGeometry(cx, cy, angle, L) {
+      const bladeLen = L * 0.76;
+      const handleLen = L * 0.24;
+      const cosA = Math.cos(angle), sinA = Math.sin(angle);
+      const nx = -sinA, ny = cosA;
+
+      const bladeL = [], bladeR = [];
+      const SEG = 7;
+      for (let i = 0; i <= SEG; i++) {
+        const t = i / SEG;
+        const p = ptAlong(cx, cy, cosA, sinA, nx, ny, t * bladeLen, bladeHalfWidth(L, t));
+        bladeL.push(p.l);
+        bladeR.push(p.r);
+      }
+
+      const hW = L * 0.016;
+      const handleL = [], handleR = [];
+      for (let i = 0; i <= 3; i++) {
+        const t = i / 3;
+        const p = ptAlong(cx, cy, cosA, sinA, nx, ny, -t * handleLen, hW * (1 - t * 0.3));
+        handleL.push(p.l);
+        handleR.push(p.r);
+      }
+
+      const guardW = L * 0.10;
+      const guardD = L * 0.028;
+      const guard = { x: cx, y: cy };
+      const guardL = { x: cx + nx * guardW, y: cy + ny * guardW };
+      const guardR = { x: cx - nx * guardW, y: cy - ny * guardW };
+      const guardTipL = {
+        x: cx + cosA * guardD + nx * guardW * 1.05,
+        y: cy + sinA * guardD + ny * guardW * 1.05,
+      };
+      const guardTipR = {
+        x: cx + cosA * guardD - nx * guardW * 1.05,
+        y: cy + sinA * guardD - ny * guardW * 1.05,
+      };
+      const guardInnerL = {
+        x: cx - cosA * guardD * 0.3 + nx * hW * 1.2,
+        y: cy - sinA * guardD * 0.3 + ny * hW * 1.2,
+      };
+      const guardInnerR = {
+        x: cx - cosA * guardD * 0.3 - nx * hW * 1.2,
+        y: cy - sinA * guardD * 0.3 - ny * hW * 1.2,
+      };
+
+      const pommel = {
+        x: cx - cosA * handleLen,
+        y: cy - sinA * handleLen,
+      };
+      const tip = {
+        x: cx + cosA * bladeLen,
+        y: cy + sinA * bladeLen,
+      };
+
+      return {
+        tip,
+        guard, guardL, guardR, guardTipL, guardTipR, guardInnerL, guardInnerR,
+        bladeL, bladeR, handleL, handleR, pommel,
+        pommelR: L * 0.022,
+      };
+    }
+
+    function traceBladePath(g) {
+      ctx.moveTo(g.tip.x, g.tip.y);
+      for (let i = g.bladeL.length - 2; i >= 0; i--) ctx.lineTo(g.bladeL[i].x, g.bladeL[i].y);
+      ctx.lineTo(g.guardL.x, g.guardL.y);
+      ctx.lineTo(g.guardInnerL.x, g.guardInnerL.y);
+      ctx.lineTo(g.guardInnerR.x, g.guardInnerR.y);
+      ctx.lineTo(g.guardR.x, g.guardR.y);
+      for (let i = 0; i < g.bladeR.length; i++) ctx.lineTo(g.bladeR[i].x, g.bladeR[i].y);
+      ctx.closePath();
+    }
+
+    // ─── Spirit particle (linh khí / kiếm quang) ───────────────────────────────
+    const NUM = 220;
     const particles = [];
+
+    function paletteForParticle(idx, gesture) {
+      if (gesture === 'thumb') {
+        return ELEMENT_PALETTES[ELEMENT_KEYS[idx % 5]];
+      }
+      if (gesture === 'rock') {
+        return idx < NUM / 2
+          ? { hue: 260, sat: 70, glow: 'rgba(140, 80, 255,', core: 'rgba(230, 210, 255,' }
+          : { hue: 48, sat: 85, glow: 'rgba(255, 220, 120,', core: 'rgba(255, 248, 220,' };
+      }
+      const themes = {
+        fist:  { hue: 200, sat: 90, glow: 'rgba(80, 180, 255,', core: 'rgba(220, 245, 255,' },
+        open:  { hue: 195, sat: 60, glow: 'rgba(160, 210, 255,', core: 'rgba(240, 248, 255,' },
+        sword: { hue: 210, sat: 40, glow: 'rgba(200, 230, 255,', core: 'rgba(255, 255, 255,' },
+        three: { hue: 155, sat: 80, glow: 'rgba(80, 255, 180,', core: 'rgba(220, 255, 240,' },
+        pinky: { hue: 190, sat: 75, glow: 'rgba(100, 220, 255,', core: 'rgba(220, 250, 255,' },
+        point: { hue: 35, sat: 95, glow: 'rgba(255, 180, 80,', core: 'rgba(255, 240, 210,' },
+        free:  { hue: 200 + (idx % 40), sat: 70, glow: 'rgba(100, 200, 255,', core: 'rgba(230, 245, 255,' },
+      };
+      const t = themes[gesture] || themes.free;
+      const jitter = (idx * 17) % 25 - 12;
+      return { ...t, hue: t.hue + jitter };
+    }
 
     class Particle {
       constructor(idx) {
         this.idx = idx;
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 3.5;
-        this.vy = (Math.random() - 0.5) * 3.5;
+        this.vx = (Math.random() - 0.5) * 2.2;
+        this.vy = (Math.random() - 0.5) * 2.2;
         this.angle = Math.random() * Math.PI * 2;
-        this.vAngle = (Math.random() - 0.5) * 0.07;
-        this.len = 22 + Math.random() * 30;   // longer blade
+        this.vAngle = (Math.random() - 0.5) * 0.05;
+        this.len = 32 + Math.random() * 38;
         this.alpha = 0.55 + Math.random() * 0.45;
-        this.lerpK = (0.055 + Math.random() * 0.03) * 3.2;
-        const hue = (185 + Math.random() * 55) | 0;
-        const bri = (68 + Math.random() * 28) | 0;
-        this.glowColor = `hsl(${hue},100%,${bri}%)`;
-        this.coreColor = `hsl(${hue},60%,96%)`;
-        // Blade vertices (recomputed each frame)
-        this.tipX = this.x; this.tipY = this.y;
-        this.baseX = this.x; this.baseY = this.y;
-        this.g1x = 0; this.g1y = 0;   // left guard
-        this.g2x = 0; this.g2y = 0;   // right guard
-        this.b1x = 0; this.b1y = 0;   // left pommel
-        this.b2x = 0; this.b2y = 0;   // right pommel
+        this.lerpK = (0.05 + Math.random() * 0.025) * 3.0;
+        this.phase = Math.random() * Math.PI * 2;
+        this.twinkle = 0.6 + Math.random() * 0.4;
+        this.wisp = Math.random() < 0.18;
+        this.wispR = 3 + Math.random() * 5;
+        this.applyPalette('free');
+        this._geom = null;
+      }
+
+      applyPalette(gesture) {
+        const pal = paletteForParticle(this.idx, gesture);
+        this.glowPrefix = pal.glow;
+        this.corePrefix = pal.core;
+        this.hue = pal.hue;
+        this.sat = pal.sat;
       }
 
       update(now) {
         const g = gestureSmooth;
+        if (g !== this._lastG) {
+          this.applyPalette(g);
+          this._lastG = g;
+        }
+
         let tx, ty, ta;
 
         if (g === 'fist') {
-          // 4 concentric rings, each rotating at different speed/direction
-          // swords point tip-inward (toward screen center)
-          const RINGS = 4;
-          const PER = NUM / RINGS;            // 50 per ring
+          const RINGS = 5;
+          const PER = NUM / RINGS;
           const ring = Math.floor(this.idx / PER);
           const pos = this.idx % PER;
-          const speeds = [0.00018, -0.00026, 0.00032, -0.00020];
-          const radii = [0.20, 0.40, 0.60, 0.82];
-
+          const speeds = [0.00015, -0.00022, 0.00028, -0.00018, 0.00012];
+          const radii = [0.14, 0.30, 0.48, 0.66, 0.84];
           const a = (pos / PER) * Math.PI * 2 + now * speeds[ring];
           const rv = SCALE * radii[ring];
-          tx = CX + Math.cos(a) * rv;
-          ty = CY + Math.sin(a) * rv;
-          ta = a + Math.PI;   // tip points toward center
+          const pulse = 1 + Math.sin(now * 0.002 + ring) * 0.04;
+          tx = CX + Math.cos(a) * rv * pulse;
+          ty = CY + Math.sin(a) * rv * pulse;
+          ta = a + Math.PI;
 
         } else if (g === 'open') {
-          const a = (this.idx / NUM) * Math.PI * 2 + now * 0.00045;
-          const rv = SCALE * 0.86;
-          tx = CX + Math.cos(a) * rv; ty = CY + Math.sin(a) * rv;
-          ta = a + Math.PI * 0.5;
+          const pt = BAGUA_CLOUD[this.idx];
+          const next = BAGUA_CLOUD[(this.idx + 1) % NUM];
+          const rot = now * 0.00012;
+          const cosR = Math.cos(rot), sinR = Math.sin(rot);
+          const px = pt.x * SCALE * 1.12, py = pt.y * SCALE * 1.12;
+          tx = CX + px * cosR - py * sinR;
+          ty = CY + px * sinR + py * cosR;
+          if (pt.seg < 8) {
+            ta = Math.atan2(next.y - pt.y, next.x - pt.x) + rot;
+          } else {
+            ta = (this.idx / NUM) * Math.PI * 2 + now * 0.0008;
+          }
 
         } else if (g === 'sword') {
           const pt = SWORD_CLOUD[this.idx];
-          tx = CX + pt.x * SCALE * 1.5; ty = CY + pt.y * SCALE * 1.5;
-          ta = -Math.PI * 0.5;   // tip points upward
+          const bob = Math.sin(now * 0.0015 + this.phase) * SCALE * 0.02;
+          tx = CX + pt.x * SCALE * 1.55;
+          ty = CY + pt.y * SCALE * 1.55 + bob;
+          ta = -Math.PI * 0.5;
 
         } else if (g === 'thumb') {
-          // 5-pointed star — angle tangent along star edge
-          const pt = STAR_CLOUD[this.idx];
-          const next = STAR_CLOUD[(this.idx + 1) % NUM];
-          tx = CX + pt.x * SCALE * 1.15; ty = CY + pt.y * SCALE * 1.15;
-          ta = Math.atan2(next.y - pt.y, next.x - pt.x);
+          const pt = WUXING_CLOUD[this.idx];
+          const next = WUXING_CLOUD[(this.idx + 1) % NUM];
+          const rot = now * 0.0001;
+          const cosR = Math.cos(rot), sinR = Math.sin(rot);
+          const px = pt.x * SCALE * 1.14, py = pt.y * SCALE * 1.14;
+          tx = CX + px * cosR - py * sinR;
+          ty = CY + px * sinR + py * cosR;
+          ta = Math.atan2(next.y - pt.y, next.x - pt.x) + rot;
 
         } else if (g === 'rock') {
-          // Archimedean spiral — analytic tangent
-          const t = this.idx / NUM;
-          const a = t * Math.PI * 7;
-          const rv = 0.06 + t * 0.80;
-          tx = CX + Math.cos(a) * rv * SCALE * 1.1;
-          ty = CY + Math.sin(a) * rv * SCALE * 1.1;
-          const tx_ = -Math.sin(a) * rv * 7 * Math.PI + Math.cos(a) * 0.80;
-          const ty_ = Math.cos(a) * rv * 7 * Math.PI + Math.sin(a) * 0.80;
-          ta = Math.atan2(ty_, tx_);
+          const pt = TAIJI_CLOUD[this.idx];
+          const rot = now * 0.00018 * (pt.seg === 0 ? 1 : -1);
+          const cosR = Math.cos(rot), sinR = Math.sin(rot);
+          const px = pt.x * SCALE * 1.15, py = pt.y * SCALE * 1.15;
+          tx = CX + px * cosR - py * sinR;
+          ty = CY + px * sinR + py * cosR;
+          const next = TAIJI_CLOUD[(this.idx + 3) % NUM];
+          ta = Math.atan2(next.y - pt.y, next.x - pt.x) + rot;
 
         } else if (g === 'three') {
-          // Equilateral triangle — tangent along edges
-          const pt = TRIANGLE_CLOUD[this.idx];
-          const next = TRIANGLE_CLOUD[(this.idx + 1) % NUM];
-          tx = CX + pt.x * SCALE * 1.1; ty = CY + pt.y * SCALE * 1.1;
-          ta = Math.atan2(next.y - pt.y, next.x - pt.x);
+          const pt = SANCAI_CLOUD[this.idx];
+          const next = SANCAI_CLOUD[(this.idx + 1) % NUM];
+          const rot = now * 0.00008;
+          const cosR = Math.cos(rot), sinR = Math.sin(rot);
+          const px = pt.x * SCALE * 1.1, py = pt.y * SCALE * 1.1;
+          tx = CX + px * cosR - py * sinR;
+          ty = CY + px * sinR + py * cosR;
+          ta = Math.atan2(next.y - pt.y, next.x - pt.x) + rot;
 
         } else if (g === 'pinky') {
-          // Sine wave — analytic tangent
-          const t = this.idx / NUM;
-          const wx = (t * 2 - 1) * 0.88;
-          const wy = Math.sin(t * Math.PI * 5) * 0.36;
-          tx = CX + wx * SCALE * 1.15;
-          ty = CY + wy * SCALE;
-          const dtx = 2 * 0.88;
-          const dty = Math.cos(t * Math.PI * 5) * Math.PI * 5 * 0.36;
-          ta = Math.atan2(dty, dtx);
+          const pt = LINGBO_CLOUD[this.idx];
+          const drift = now * 0.00025;
+          const wx = pt.x + Math.sin(drift + this.phase) * 0.04;
+          tx = CX + wx * SCALE * 1.18;
+          ty = CY + pt.y * SCALE * 1.05;
+          const next = LINGBO_CLOUD[(this.idx + 2) % NUM];
+          ta = Math.atan2(next.y - pt.y, next.x - pt.x);
 
         } else if (g === 'point') {
-          // Stream along the trail the finger drew
-          // particle 0 → head (tip), particle N-1 → tail (oldest position)
           if (rawFingerTip) {
             const tgt = fingerTrail[this.idx] || fingerTrail[fingerTrail.length - 1];
             tx = tgt ? tgt.x : rawFingerTip.x;
             ty = tgt ? tgt.y : rawFingerTip.y;
+            ta = this.idx < fingerTrail.length - 1
+              ? Math.atan2(
+                fingerTrail[this.idx].y - (fingerTrail[this.idx + 1]?.y ?? ty),
+                fingerTrail[this.idx].x - (fingerTrail[this.idx + 1]?.x ?? tx))
+              : this.angle;
           }
-        }
-
-        // Slow rotation for static formations (full turn ≈ 60s)
-        if (tx !== undefined && (g === 'sword' || g === 'thumb' || g === 'rock' || g === 'three' || g === 'pinky')) {
-          const sr = now * 0.0001;
-          const cosSR = Math.cos(sr), sinSR = Math.sin(sr);
-          const dx = tx - CX, dy = ty - CY;
-          tx = CX + dx * cosSR - dy * sinSR;
-          ty = CY + dx * sinSR + dy * cosSR;
-          ta += sr;
         }
 
         if (tx !== undefined) {
           this.x += (tx - this.x) * this.lerpK;
           this.y += (ty - this.y) * this.lerpK;
-          if (gestureSmooth === 'fist') {
-            // Align blades radially — tip points toward center
+          if (g === 'fist' || g === 'point') {
             let da = ta - this.angle;
             if (da > Math.PI) da -= Math.PI * 2;
             if (da < -Math.PI) da += Math.PI * 2;
-            this.angle += da * 0.10;
+            this.angle += da * (g === 'point' ? 0.14 : 0.10);
           } else {
-            this.angle += this.vAngle;   // spin freely for all other formations
+            let da = ta - this.angle;
+            if (da > Math.PI) da -= Math.PI * 2;
+            if (da < -Math.PI) da += Math.PI * 2;
+            this.angle += da * 0.08;
           }
         } else {
-          this.x += this.vx; this.y += this.vy; this.angle += this.vAngle;
-          if (this.x < -40) this.vx = Math.abs(this.vx);
-          if (this.x > canvas.width + 40) this.vx = -Math.abs(this.vx);
-          if (this.y < -40) this.vy = Math.abs(this.vy);
-          if (this.y > canvas.height + 40) this.vy = -Math.abs(this.vy);
+          const drift = 0.3 + Math.sin(now * 0.0008 + this.phase) * 0.2;
+          this.x += this.vx * drift;
+          this.y += this.vy * drift;
+          this.angle += this.vAngle;
+          if (this.x < -60) this.vx = Math.abs(this.vx);
+          if (this.x > canvas.width + 60) this.vx = -Math.abs(this.vx);
+          if (this.y < -60) this.vy = Math.abs(this.vy);
+          if (this.y > canvas.height + 60) this.vy = -Math.abs(this.vy);
         }
 
-        // ── Blade geometry: tapered 5-vertex polygon ─────────────────────────
-        const half = this.len * 0.5;
-        const cosA = Math.cos(this.angle), sinA = Math.sin(this.angle);
-        const nx = -sinA, ny = cosA;          // perpendicular normal
+        this._geom = buildJianGeometry(this.x, this.y, this.angle, this.len);
+      }
 
-        this.tipX = this.x + cosA * half;    // pointed tip
-        this.tipY = this.y + sinA * half;
-        this.baseX = this.x - cosA * half;    // pommel end
-        this.baseY = this.y - sinA * half;
+      draw(now, gesture) {
+        const pulse = 0.82 + Math.sin(now * 0.004 + this.phase) * 0.18 * this.twinkle;
+        const a = this.alpha * pulse;
+        const isFree = gesture === 'free';
 
-        // Guard (widest point) at 30% from base along blade
-        const gx = this.baseX + cosA * this.len * 0.30;
-        const gy = this.baseY + sinA * this.len * 0.30;
-        const hw = this.len * 0.068;         // half-width at guard
-        const bhw = this.len * 0.016;         // half-width at pommel
+        if (this.wisp && (isFree || gesture === 'pinky')) {
+          const wg = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.wispR * 3);
+          wg.addColorStop(0, `${this.glowPrefix}${a * 0.3})`);
+          wg.addColorStop(0.5, `${this.glowPrefix}${a * 0.1})`);
+          wg.addColorStop(1, `${this.glowPrefix}0)`);
+          ctx.fillStyle = wg;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.wispR * 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          return;
+        }
 
-        this.g1x = gx + nx * hw; this.g1y = gy + ny * hw;
-        this.g2x = gx - nx * hw; this.g2y = gy - ny * hw;
-        this.b1x = this.baseX + nx * bhw; this.b1y = this.baseY + ny * bhw;
-        this.b2x = this.baseX - nx * bhw; this.b2y = this.baseY - ny * bhw;
+        const g = this._geom;
+        if (!g) return;
+
+        // Soft qi aura hugging the blade only (not a light-stick stroke)
+        ctx.save();
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = `${this.glowPrefix}${a * 0.35})`;
+        ctx.fillStyle = `${this.glowPrefix}${a * 0.08})`;
+        ctx.beginPath();
+        traceBladePath(g);
+        ctx.fill();
+        ctx.restore();
+
+        // Handle (cán kiếm) — dark wrap
+        const hGrd = ctx.createLinearGradient(g.pommel.x, g.pommel.y, g.guard.x, g.guard.y);
+        hGrd.addColorStop(0, `rgba(35, 28, 22, ${a * 0.9})`);
+        hGrd.addColorStop(0.5, `rgba(55, 42, 30, ${a * 0.95})`);
+        hGrd.addColorStop(1, `rgba(70, 55, 38, ${a * 0.85})`);
+        ctx.fillStyle = hGrd;
+        ctx.beginPath();
+        ctx.moveTo(g.handleL[0].x, g.handleL[0].y);
+        for (let i = 1; i < g.handleL.length; i++) ctx.lineTo(g.handleL[i].x, g.handleL[i].y);
+        for (let i = g.handleR.length - 1; i >= 0; i--) ctx.lineTo(g.handleR[i].x, g.handleR[i].y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Pommel disk
+        ctx.fillStyle = `rgba(160, 140, 90, ${a * 0.85})`;
+        ctx.beginPath();
+        ctx.arc(g.pommel.x, g.pommel.y, g.pommelR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Guard (chấn thủ) — bronze wings
+        const guardGrd = ctx.createLinearGradient(
+          g.guardL.x, g.guardL.y, g.guardR.x, g.guardR.y);
+        guardGrd.addColorStop(0, `rgba(140, 110, 60, ${a * 0.9})`);
+        guardGrd.addColorStop(0.5, `rgba(220, 190, 110, ${a * 0.95})`);
+        guardGrd.addColorStop(1, `rgba(140, 110, 60, ${a * 0.9})`);
+        ctx.fillStyle = guardGrd;
+        ctx.beginPath();
+        ctx.moveTo(g.guardL.x, g.guardL.y);
+        ctx.lineTo(g.guardTipL.x, g.guardTipL.y);
+        ctx.lineTo(g.guardTipR.x, g.guardTipR.y);
+        ctx.lineTo(g.guardR.x, g.guardR.y);
+        ctx.lineTo(g.guardInnerR.x, g.guardInnerR.y);
+        ctx.lineTo(g.guardInnerL.x, g.guardInnerL.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Blade body — tapered jian with metallic edge darkening
+        const bladeGrd = ctx.createLinearGradient(g.guard.x, g.guard.y, g.tip.x, g.tip.y);
+        bladeGrd.addColorStop(0, `rgba(170, 195, 220, ${a * 0.75})`);
+        bladeGrd.addColorStop(0.35, `rgba(220, 235, 250, ${a * 0.92})`);
+        bladeGrd.addColorStop(0.75, `rgba(240, 248, 255, ${a * 0.96})`);
+        bladeGrd.addColorStop(1, `rgba(255, 255, 255, ${a})`);
+        ctx.fillStyle = bladeGrd;
+        ctx.beginPath();
+        traceBladePath(g);
+        ctx.fill();
+
+        // Edge highlights (sắc kiếm)
+        ctx.strokeStyle = `rgba(60, 90, 130, ${a * 0.55})`;
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(g.bladeL[0].x, g.bladeL[0].y);
+        for (let i = 1; i < g.bladeL.length; i++) ctx.lineTo(g.bladeL[i].x, g.bladeL[i].y);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(200, 225, 255, ${a * 0.7})`;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(g.bladeR[0].x, g.bladeR[0].y);
+        for (let i = 1; i < g.bladeR.length; i++) ctx.lineTo(g.bladeR[i].x, g.bladeR[i].y);
+        ctx.stroke();
+
+        // Fuller groove (rãnh khắc)
+        ctx.strokeStyle = `rgba(80, 120, 170, ${a * 0.35})`;
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(g.guard.x, g.guard.y);
+        ctx.lineTo(g.tip.x, g.tip.y);
+        ctx.stroke();
+
+        // Subtle qi gleam on one edge
+        const gleamT = 0.55 + Math.sin(now * 0.003 + this.phase) * 0.12;
+        const gi = Math.min(g.bladeL.length - 2, Math.floor(gleamT * (g.bladeL.length - 1)));
+        const gp = g.bladeL[gi];
+        const gp2 = g.bladeL[gi + 1];
+        ctx.strokeStyle = `rgba(255, 255, 255, ${a * 0.45})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(gp.x, gp.y);
+        ctx.lineTo(gp2.x, gp2.y);
+        ctx.stroke();
+
+        // Tip gleam — small, not a glow orb
+        const tipA = a * (0.5 + Math.sin(now * 0.007 + this.phase) * 0.3);
+        ctx.fillStyle = `rgba(255, 255, 255, ${tipA})`;
+        ctx.beginPath();
+        ctx.moveTo(g.tip.x, g.tip.y);
+        ctx.lineTo(g.bladeL[g.bladeL.length - 1].x, g.bladeL[g.bladeL.length - 1].y);
+        ctx.lineTo(g.bladeR[g.bladeR.length - 1].x, g.bladeR[g.bladeR.length - 1].y);
+        ctx.closePath();
+        ctx.fill();
       }
     }
 
     for (let i = 0; i < NUM; i++) particles.push(new Particle(i));
 
-    // ─── Render loop — 3 passes ────────────────────────────────────────────────
-    function frame(now) {
-      ctx.fillStyle = 'rgba(0,0,14,0.17)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // ─── Formation overlays (bagua ring, taiji hint) ───────────────────────────
+    function drawFormationOverlay(now, gesture) {
+      ctx.save();
+      ctx.globalAlpha = 0.12 + Math.sin(now * 0.002) * 0.04;
 
-      // Ambient center glow per gesture
-      if (gestureSmooth !== 'free') {
-        const ambients = {
-          fist: [100, 180, 255], open: [80, 230, 190],
-          sword: [180, 210, 255], thumb: [255, 215, 60],
-          rock: [190, 80, 255], three: [80, 255, 150],
-          pinky: [100, 200, 255], point: [255, 160, 60],
-        };
-        const [rr, gg, bb] = ambients[gestureSmooth] || [100, 180, 255];
-        const ar = 60 + Math.sin(now * 0.003) * 25;
+      if (gesture === 'open') {
+        const rot = now * 0.00012;
+        ctx.strokeStyle = 'rgba(180, 220, 255, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([8, 12]);
+        ctx.beginPath();
+        ctx.arc(CX, CY, SCALE * 0.22, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        for (let i = 0; i < 8; i++) {
+          const a = i * Math.PI / 4 + rot;
+          ctx.beginPath();
+          ctx.moveTo(CX + Math.cos(a) * SCALE * 0.25, CY + Math.sin(a) * SCALE * 0.25);
+          ctx.lineTo(CX + Math.cos(a) * SCALE * 0.95, CY + Math.sin(a) * SCALE * 0.95);
+          ctx.strokeStyle = `rgba(140, 200, 255, ${0.15 + (i % 2) * 0.1})`;
+          ctx.stroke();
+        }
+      }
+
+      if (gesture === 'rock') {
+        const rot = now * 0.00015;
+        ctx.beginPath();
+        ctx.arc(CX, CY, SCALE * 0.88, rot, rot + Math.PI);
+        ctx.strokeStyle = 'rgba(160, 100, 255, 0.25)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(CX, CY, SCALE * 0.88, rot + Math.PI, rot + Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 220, 120, 0.25)';
+        ctx.stroke();
+      }
+
+      if (gesture === 'fist') {
+        for (let r = 1; r <= 5; r++) {
+          const rad = SCALE * (0.14 + r * 0.14);
+          ctx.beginPath();
+          ctx.arc(CX, CY, rad, now * 0.0001 * (r % 2 ? -1 : 1), now * 0.0001 * (r % 2 ? -1 : 1) + Math.PI * 1.5);
+          ctx.strokeStyle = `rgba(80, 160, 255, ${0.08 + r * 0.02})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+    }
+
+    // ─── Render loop ───────────────────────────────────────────────────────────
+    function frame(now) {
+      ctx.fillStyle = 'rgba(2, 4, 12, 0.22)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawBackground(now);
+
+      const g = gestureSmooth;
+
+      if (g !== 'free') {
+        const [rr, gg, bb] = GESTURE_AMBIENT[g] || [100, 180, 255];
+        const ar = SCALE * (0.5 + Math.sin(now * 0.002) * 0.08);
         const grd = ctx.createRadialGradient(CX, CY, 0, CX, CY, ar);
-        grd.addColorStop(0, `rgba(${rr},${gg},${bb},0.07)`);
+        grd.addColorStop(0, `rgba(${rr},${gg},${bb},0.09)`);
+        grd.addColorStop(0.6, `rgba(${rr},${gg},${bb},0.03)`);
         grd.addColorStop(1, 'transparent');
         ctx.fillStyle = grd;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Fingertip cursor glow for 'point' gesture
-      if (gestureSmooth === 'point' && rawFingerTip) {
+      drawFormationOverlay(now, g);
+
+      if (g === 'point' && rawFingerTip) {
         const fg = ctx.createRadialGradient(
           rawFingerTip.x, rawFingerTip.y, 0,
-          rawFingerTip.x, rawFingerTip.y, 48);
-        fg.addColorStop(0, 'rgba(255,210,100,0.40)');
-        fg.addColorStop(0.4, 'rgba(255,160,50,0.14)');
+          rawFingerTip.x, rawFingerTip.y, 72);
+        fg.addColorStop(0, 'rgba(255, 240, 200, 0.45)');
+        fg.addColorStop(0.3, 'rgba(255, 180, 80, 0.18)');
         fg.addColorStop(1, 'transparent');
         ctx.fillStyle = fg;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Update finger trail — grow when finger moves, clear when leaving 'point'
-      if (gestureSmooth === 'point' && rawFingerTip) {
+      if (g === 'point' && rawFingerTip) {
         const last = fingerTrail[0];
         if (!last || Math.hypot(rawFingerTip.x - last.x, rawFingerTip.y - last.y) > 2) {
           fingerTrail.unshift({ x: rawFingerTip.x, y: rawFingerTip.y });
           if (fingerTrail.length > NUM) fingerTrail.length = NUM;
         }
-      } else if (gestureSmooth !== 'point') {
+      } else if (g !== 'point') {
         fingerTrail.length = 0;
       }
 
       for (const p of particles) p.update(now);
 
-      // Pass 1 — outer glow (blurry line along blade axis)
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineWidth = 5;
-      ctx.shadowBlur = 14;
-      for (const p of particles) {
-        ctx.globalAlpha = p.alpha * 0.30;
-        ctx.shadowColor = p.glowColor;
-        ctx.strokeStyle = p.glowColor;
-        ctx.beginPath();
-        ctx.moveTo(p.tipX, p.tipY);
-        ctx.lineTo(p.baseX, p.baseY);
-        ctx.stroke();
-      }
-      ctx.restore();
+      for (const p of particles) p.draw(now, g);
 
-      // Pass 2 — blade silhouette: tapered 5-vertex polygon
-      //   tip → left-guard → left-pommel → right-pommel → right-guard → close
-      ctx.save();
-      ctx.shadowBlur = 0;
-      for (const p of particles) {
-        ctx.globalAlpha = p.alpha * 0.92;
-        ctx.fillStyle = p.coreColor;
-        ctx.beginPath();
-        ctx.moveTo(p.tipX, p.tipY);
-        ctx.lineTo(p.g1x, p.g1y);
-        ctx.lineTo(p.b1x, p.b1y);
-        ctx.lineTo(p.b2x, p.b2y);
-        ctx.lineTo(p.g2x, p.g2y);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
-
-      // Pass 3 — hand skeleton overlay
       drawHandSkeleton(handLandmarks);
 
       requestAnimationFrame(frame);
@@ -541,30 +932,27 @@
     // ─── Gesture classifier ───────────────────────────────────────────────────
     function classifyGesture(lm) {
       const up = (tip, pip) => lm[tip].y < lm[pip].y - 0.01;
-      const ix = up(8, 6);   // index
-      const mx = up(12, 10);  // middle
-      const rx = up(16, 14);  // ring
-      const px = up(20, 18);  // pinky
+      const ix = up(8, 6);
+      const mx = up(12, 10);
+      const rx = up(16, 14);
+      const px = up(20, 18);
       const upCount = [ix, mx, rx, px].filter(Boolean).length;
 
-      if (upCount >= 4) return 'open';                     // 🖐 xòe tay
+      if (upCount >= 4) return 'open';
 
       if (!ix && !mx && !rx && !px) {
-        // Thumb-up: tip must be well above middle-finger MCP (lm[9] ≈ center of palm)
-        // Using lm[9] avoids false-positives when fist tucks thumb sideways
-        if (lm[4].y < lm[9].y - 0.07) return 'thumb';     // 👍 ngón cái
-        return 'fist';                                     // ✊ nắm tay
+        if (lm[4].y < lm[9].y - 0.07) return 'thumb';
+        return 'fist';
       }
 
-      if (ix && !mx && !rx && px) return 'rock';          // 🤘 sừng quỷ
-      if (ix && !mx && !rx && !px) return 'point';          // ☝ một ngón
-      if (ix && mx && rx && !px) return 'three';         // 🤟 ba ngón
-      if (!ix && !mx && !rx && px) return 'pinky';         // 🤙 ngón út
+      if (ix && !mx && !rx && px) return 'rock';
+      if (ix && !mx && !rx && !px) return 'point';
+      if (ix && mx && rx && !px) return 'three';
+      if (!ix && !mx && !rx && px) return 'pinky';
 
-      // Sword (剑指): index+middle together
       if (ix && mx && !rx && !px) {
         const dist = Math.hypot(lm[8].x - lm[12].x, lm[8].y - lm[12].y);
-        if (dist < 0.10) return 'sword';                   // ☞ trỏ+giữa
+        if (dist < 0.10) return 'sword';
       }
 
       return 'free';
@@ -578,18 +966,15 @@
       return Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0];
     }
 
-    // ─── MediaPipe Tasks Vision – HandLandmarker ──────────────────────────────────
+    // ─── MediaPipe HandLandmarker ───────────────────────────────────────────────
     async function initHandTracking() {
-      statusEl.textContent = '⏳ Đang tải mô hình nhận diện tay...';
+      statusEl.textContent = '⏳ Đang tụ linh khí · tải mô hình nhận diện tay...';
 
-      const vision = await FilesetResolver.forVisionTasks(
-        './assets/mediapipe/wasm'
-      );
+      const vision = await FilesetResolver.forVisionTasks('./assets/mediapipe/wasm');
 
       const handLandmarker = await HandLandmarker.createFromOptions(vision, {
         baseOptions: {
-          modelAssetPath:
-            './assets/model/hand_landmarker.task',
+          modelAssetPath: './assets/model/hand_landmarker.task',
           delegate: 'GPU',
         },
         runningMode: 'VIDEO',
@@ -599,17 +984,15 @@
         minTrackingConfidence: 0.5,
       });
 
-      // Start camera
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 320, height: 240, facingMode: 'user' },
       });
       video.srcObject = stream;
       await video.play();
 
-      statusEl.textContent = '📷 Camera sẵn sàng — hướng tay vào màn hình';
+      statusEl.textContent = '📷 Tiên trận sẵn sàng — hướng tay vào màn hình';
       setTimeout(() => { statusEl.style.opacity = '0'; }, 3500);
 
-      // Detection loop — throttled to ~20 fps via setTimeout to avoid blocking render/video
       let lastVideoTime = -1;
       let detecting = false;
 
@@ -621,13 +1004,11 @@
             const result = handLandmarker.detectForVideo(video, performance.now());
             if (result.landmarks?.length) {
               handLandmarks = result.landmarks[0];
-              // Track index fingertip in screen coords (mirror x to match CSS)
               rawFingerTip = {
                 x: (1 - handLandmarks[8].x) * canvas.width,
                 y: handLandmarks[8].y * canvas.height,
               };
-              const raw = classifyGesture(handLandmarks);
-              gestureSmooth = pushGesture(raw);
+              gestureSmooth = pushGesture(classifyGesture(handLandmarks));
             } else {
               handLandmarks = null;
               rawFingerTip = null;
@@ -638,7 +1019,7 @@
             detecting = false;
           }
         }
-        setTimeout(detect, 80); // ~12 fps inference
+        setTimeout(detect, 80);
       }
       detect();
     }
